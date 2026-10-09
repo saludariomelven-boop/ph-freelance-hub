@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en-PH">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Complete all-in-one hub: tax calculators, BIR form guides, invoice generator, deadline tracker — built for Filipino freelancers. Updated 2026 rates.">
+    <meta name="keywords" content="Philippines freelancer, BIR 1701Q, tax calculator, 8% flat tax, SSS PhilHealth PagIBIG, Wise vs PayPal, hourly rate, freelance guide">
+    <link rel="canonical" href="https://saludariomelven-boop.github.io/ph-freelance-hub/">
+    <meta name="author" content="PH Freelance Hub">
+    <meta property="og:title" content="PH Freelance Hub — Tools & Guides for Filipino Freelancers">
+    <meta property="og:description" content="Calculate take-home pay, compare tax regimes, generate invoices, track deadlines — all free, all PH-focused">
+    <meta property="og:type" content="website">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- ================================================== -->
+    <!-- 📋 YOUR CONTROL PANEL — EDIT ONLY THIS BLOCK -->
+    <!-- ================================================== -->
+    <script>
+        const CONFIG = {
+            meta: {
+                siteName: "PH Freelance Hub",
+                version: "2.5-FINAL",
+                lastUpdated: "2026-10-09",
+                title: "PH Freelance Hub — Calculators, BIR Guides & Tools for Filipino Freelancers",
+                defaultExchangeRate: 58.00,
+                liveExchangeAPI: "https://api.exchangerate-api.com/v4/latest/USD",
+                adsenseClientId: "", // Paste your ID like: "ca-pub-1234567890123456"
+                enableAds: false // Set to true once ready
+            },
+
+            // 💰 AFFILIATE LINKS — PASTE YOUR UNIQUE LINKS BELOW
+            affiliates: {
+                wise: "#", // Replace with your Wise referral link
+                payoneer: "#",
+                upwork: "#",
+                fiverr: "#",
+                hostinger: "#",
+                canva: "#"
+            },
+
+            tax: {
+                exemptThresholdAnnual: 250000,
+                flatRate: 0.08,
+                flatLimitAnnual: 3000000,
+                graduatedBrackets: [
+                    { maxAnnual: 250000, rate: 0, baseTax: 0 },
+                    { maxAnnual: 400000, rate: 0.15, baseTax: 0 },
+                    { maxAnnual: 800000, rate: 0.20, baseTax: 22500 },
+                    { maxAnnual: 2000000, rate: 0.25, baseTax: 102500 },
+                    { maxAnnual: 8000000, rate: 0.30, baseTax: 602500 },
+                    { maxAnnual: Infinity, rate: 0.35, baseTax: 2402500 }
+                ]
+            },
+
+            contributions: {
+                sss: {
+                    minMSC: 4000,
+                    maxMSC: 30000,
+                    selfEmployedRate: 0.09
+                },
+                philhealth: {
+                    totalRate: 0.05,
+                    yourShareRate: 0.025
+                },
+                pagibig: {
+                    minMonthly: 200,
+                    recommended: 500
+                }
+            },
+
+            deadlines: {
+                q1: { date: "2026-05-29", name: "Q1 Quarterly Tax" },
+                q2: { date: "2026-08-29", name: "Q2 Quarterly Tax" },
+                q3: { date: "2026-11-29", name: "Q3 Quarterly Tax" },
+                annual: { date: "2027-04-15", name: "Annual Income Tax (1701)" },
+                sssMonthly: "10th of next month",
+                philhealthMonthly: "Last day of next month",
+                pagibigMonthly: "Last day of next month"
+            },
+
+            fees: {
+                paypalPct: 0.044,
+                paypalFixedUSD: 0.30,
+                wisePct: 0.007,
+                bankFixedPHP: 350
+            },
+
+            banks: [
+                { name: "SeaBank", type: "Digital Bank", feePHP: 0, clearance: "Instant", recommended: true },
+                { name: "CIMB", type: "Digital Bank", feePHP: 0, clearance: "Instant", recommended: true },
+                { name: "Landbank", type: "Gov't Bank", feePHP: 200, clearance: "1–2 days", recommended: false },
+                { name: "BDO", type: "Major Bank", feePHP: 250, clearance: "1–2 days", recommended: false },
+                { name: "BPI", type: "Major Bank", feePHP: 250, clearance: "1–2 days", recommended: false }
+            ]
+        };
+    </script>
+    <!-- ================================================== -->
+    <!-- END OF CONTROL PANEL — UPDATE NOTHING ELSE BELOW -->
+    <!-- ================================================== -->
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0D9488',
+                        secondary: '#0F766E',
+                        accent: '#F59E0B',
+                        indigo: '#4F46E5',
+                        dark: '#1E293B'
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .card-shadow { box-shadow: 0 4px 20px rgba(13,148,136,0.12); }
+            .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
+            .card-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(13,148,136,0.18); }
+            .countdown-urgent { animation: pulse 2s infinite; }
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.6; }
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+<!-- ⏰ LIVE DEADLINE COUNTDOWN BAR -->
+<div id="deadline-bar" class="bg-indigo-600 text-white py-2 text-center text-sm font-medium">
+    <span id="countdown-text">Loading deadlines…</span>
+</div>
+
+<!-- Navigation -->
+<nav class="bg-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center"><a href="#" class="flex items-center gap-2"><span class="text-primary text-2xl"><i class="fa fa-briefcase"></i></span><span class="font-bold text-lg">PH Freelance Hub</span></a></div>
+            <div class="hidden md:flex items-center space-x-4 text-sm">
+                <a href="#calculators" class="text-slate-600 hover:text-primary font-medium">Calculators</a>
+                <a href="#tax-advisor" class="text-slate-600 hover:text-primary font-medium">Tax Advisor</a>
+                <a href="#invoice" class="text-slate-600 hover:text-primary font-medium">Invoice</a>
+                <a href="#bir-guide" class="text-slate-600 hover:text-primary font-medium">BIR Guide</a>
+                <a href="#resources" class="text-slate-600 hover:text-primary font-medium">Resources</a>
+                <a href="#faq" class="text-slate-600 hover:text-primary font-medium">FAQ</a>
+            </div>
+            <div class="flex md:hidden items-center">
+                <button id="menu-toggle" class="text-slate-600 text-xl"><i class="fa fa-bars"></i></button>
+            </div>
+        </div>
+    </div>
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-t px-4 py-3 space-y-3">
+        <a href="#calculators" class="block py-2">Calculators</a>
+        <a href="#tax-advisor" class="block py-2">Tax Advisor</a>
+        <a href="#invoice" class="block py-2">Invoice Generator</a>
+        <a href="#bir-guide" class="block py-2">BIR Guide</a>
+        <a href="#resources" class="block py-2">Resources</a>
+        <a href="#faq" class="block py-2">FAQ</a>
+    </div>
+</nav>
+
+<!-- Hero -->
+<header class="bg-gradient-to-br from-teal-600 to-teal-700 text-white">
+    <div class="max-w-7xl mx-auto px-4 py-16 md:py-20">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <h1 class="text-[clamp(2rem,5vw,3.2rem)] font-bold leading-tight mb-5">Earn More. Keep More.<br><span class="text-amber-300">Work Freely.</span></h1>
+                <p class="text-lg text-teal-100 mb-8">Complete all-in-one hub: accurate calculators, BIR form walkthroughs, invoice maker, deadline tracker — everything built for Filipino freelancers.</p>
+                <div class="flex flex-wrap gap-3">
+                    <a href="#calculators" class="bg-amber-500 text-slate-900 px-6 py-3 rounded-lg font-semibold hover:bg-amber-600 transition">Calculate Pay</a>
+                    <a href="#tax-advisor" class="bg-white/20 hover:bg-white/30 px-6 py-3 rounded-lg font-semibold transition">Which Tax Is Better?</a>
+                </div>
+                <p class="mt-6 text-sm text-teal-200">Updated: <span id="hero-date">2026-10-09</span> • <span id="hero-rate">USD→PHP: ₱—</span></p>
+            </div>
+            <div class="hidden md:block"><img src="https://images.unsplash.com/photo-1522202179204-ec484e629934?w=600&h=400&fit=crop" alt="Freelancer working in Philippines" class="rounded-xl shadow-2xl"></div>
+        </div>
+    </div>
+</header>
+
+<!-- Quick Stats -->
+<section class="bg-white border-b py-5">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+            <div><div class="text-xl font-bold text-primary">8+</div><div class="text-xs text-slate-500 mt-1">Smart Tools</div></div>
+            <div><div class="text-xl font-bold text-accent">₱0</div><div class="text-xs text-slate-500 mt-1">All Free</div></div>
+            <div><div class="text-xl font-bold text-indigo">2026</div><div class="text-xs text-slate-500 mt-1">Latest Rules</div></div>
+            <div><div class="text-xl font-bold text-green-600">1-Click</div><div class="text-xs text-slate-500 mt-1">PDF Export</div></div>
+            <div><div class="text-xl font-bold text-primary">100%</div><div class="text-xs text-slate-500 mt-1">PH-Focused</div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ============== CALCULATORS SECTION ============== -->
+<section id="calculators" class="py-16 bg-slate-50">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-bold mb-3">Free Calculators</h2>
+            <p class="text-slate-600">All formulas use official 2026 BIR / SSS / PhilHealth / Pag-IBIG rates</p>
+        </div>
+
+        <!-- Calc 1: Take-Home Pay -->
+        <div class="bg-white rounded-2xl p-6 card-shadow mb-6">
+            <h3 class="text-xl font-bold mb-4 flex items-center"><i class="fa fa-calculator text-primary mr-2"></i> Take-Home Pay Calculator</h3>
+            <p class="text-slate-600 mb-4">See exactly what lands in your pocket after tax + mandatory contributions.</p>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Monthly Gross Income (₱)</label>
+                        <input type="number" id="gross-pay" placeholder="e.g. 40000" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Tax Method</label>
+                        <select id="tax-mode" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary">
+                            <option value="standard">Standard / Graduated Income Tax</option>
+                            <option value="selfemp">Self-Employed / 8% Flat (≤₱3M/yr)</option>
+                        </select>
+                    </div>
+                    <button id="calc-takehome" class="w-full bg-primary hover:bg-secondary text-white py-3 rounded-lg font-semibold">Calculate Net Pay</button>
+                </div>
+                <div id="takehome-result" class="hidden bg-teal-50 rounded-lg p-5 border border-teal-100">
+                    <h4 class="font-semibold text-teal-800 mb-3">Monthly Breakdown</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span>Gross Monthly:</span><span class="font-semibold" id="res-gross">—</span></div>
+                        <div class="flex justify-between text-red-600"><span>Income Tax:</span><span id="res-tax">—</span></div>
+                        <div class="flex justify-between text-red-600"><span>SSS:</span><span id="res-sss">—</span></div>
+                        <div class="flex justify-between text-red-600"><span>PhilHealth:</span><span id="res-phil">—</span></div>
+                        <div class="flex justify-between text-red-600"><span>Pag-IBIG:</span><span id="res-pag">—</span></div>
+                        <hr class="border-teal-200 my-2">
+                        <div class="flex justify-between text-lg font-bold text-primary"><span>Net Take-Home:</span><span id="res-net">—</span></div>
+                    </div>
+                    <button class="mt-3 text-sm text-primary hover:text-secondary" onclick="printSection('takehome-result')"><i class="fa fa-print"></i> Save/Print</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calc 2: Remittance Fees -->
+        <div class="bg-white rounded-2xl p-6 card-shadow mb-6">
+            <h3 class="text-xl font-bold mb-4 flex items-center"><i class="fa fa-money text-accent mr-2"></i> Remittance Fee & Exchange Calculator</h3>
+            <p class="text-slate-600 mb-4">Compare payment methods — see which keeps more of your earnings.</p>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Amount Received (USD $)</label>
+                        <input type="number" id="usd-amount" placeholder="e.g. 1000" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-accent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">USD → PHP Exchange Rate</label>
+                        <input type="number" id="exch-rate" step="0.01" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-accent">
+                    </div>
+                    <button id="calc-fees" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 py-3 rounded-lg font-semibold">Compare Methods</button>
+                </div>
+                <div id="fee-result" class="hidden space-y-3">
+                    <div class="p-3 bg-slate-100 rounded-lg">
+                        <p class="font-semibold mb-1">PayPal</p>
+                        <p class="text-sm">Fee: <span id="paypal-fee">—</span> → Net Received: <span class="font-bold" id="paypal-net">—</span></p>
+                    </div>
+                    <div class="p-3 bg-green-50 rounded-lg border border-green-200">
+                        <p class="font-semibold text-green-700 mb-1">Wise ⭐ Recommended</p>
+                        <p class="text-sm">Fee: <span id="wise-fee">—</span> → Net Received: <span class="font-bold text-green-700" id="wise-net">—</span></p>
+                        <a id="wise-signup" href="#" target="_blank" class="inline-block mt-2 text-sm text-green-600 hover:underline">→ Open Wise Account</a>
+                    </div>
+                    <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p class="font-semibold text-blue-700 mb-1">Direct Bank Transfer</p>
+                        <p class="text-sm">Fee: ~₱350 → Net Received: <span class="font-bold text-blue-700" id="bank-net">—</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calc 3: Hourly Rate -->
+        <div class="bg-white rounded-2xl p-6 card-shadow mb-6">
+            <h3 class="text-xl font-bold mb-4 flex items-center"><i class="fa fa-clock-o text-slate-600 mr-2"></i> Ideal Hourly Rate Calculator</h3>
+            <p class="text-slate-600 mb-4">Don't undercharge — includes 25% buffer for taxes, leave, and admin time.</p>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Target Monthly Income (₱)</label>
+                        <input type="number" id="monthly-target" placeholder="e.g. 50000" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Billable Hours Per Week</label>
+                        <input type="number" id="hours-weekly" value="35" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500">
+                    </div>
+                    <button id="calc-rate" class="w-full bg-slate-700 hover:bg-slate-800 text-white py-3 rounded-lg font-semibold">Calculate Rate</button>
+                </div>
+                <div id="rate-result" class="hidden bg-slate-50 rounded-lg p-5 border border-slate-200 text-center">
+                    <p class="text-sm text-slate-500 mb-2">Your Minimum Hourly Rate</p>
+                    <p class="text-3xl font-bold text-slate-800 mb-2" id="hourly-rate">—</p>
+                    <p class="text-sm text-slate-500">≈ <span id="usd-equiv">—</span> USD/hr</p>
+                    <p class="text-xs text-slate-400 mt-2">Includes 25% buffer for taxes, leave, and non-billable time</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calc 4: Tax Advisor -->
+        <div id="tax-advisor" class="bg-white rounded-2xl p-6 card-shadow mb-6">
+            <h3 class="text-xl font-bold mb-4 flex items-center"><i class="fa fa-balance-scale text-indigo-500 mr-2"></i> Which Tax Saves You More?</h3>
+            <p class="text-slate-600 mb-4">Input your income & expenses → we tell you exactly which regime is better.</p>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Estimated Annual Gross Income (₱)</label>
+                        <input type="number" id="advisor-gross" placeholder="e.g. 600000" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Annual Deductible Expenses (₱)</label>
+                        <input type="number" id="advisor-expenses" placeholder="e.g. 120000" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <button id="calc-advisor" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-semibold">Compare & Decide</button>
+                </div>
+                <div id="advisor-result" class="hidden rounded-lg p-5">
+                    <h4 class="font-bold text-lg mb-3" id="advisor-verdict">—</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span>Tax — 8% Option:</span><span id="advisor-tax8">—</span></div>
+                        <div class="flex justify-between"><span>Tax — Graduated Option:</span><span id="advisor-taxgrad">—</span></div>
+                        <div class="flex justify-between font-bold text-green-600 mt-2"><span>Your Annual Savings:</span><span id="advisor-savings">—</span></div>
+                        <p class="text-xs text-slate-500 mt-3" id="advisor-note">—</p>
+                    </div>
+                    <button class="mt-3 text-sm text-indigo-600 hover:text-indigo-800" onclick="printSection('advisor-result')"><i class="fa fa-print"></i> Save/Print</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============== INVOICE GENERATOR ============== -->
+<section id="invoice" class="py-16 bg-white">
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-bold mb-3">Free Invoice Generator</h2>
+            <p class="text-slate-600">BIR-compliant format — fill → copy → send</p>
+        </div>
+        <div class="bg-slate-50 rounded-2xl p-6 mb-6">
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Your Name / Business</label>
+                    <input type="text" id="inv-name" placeholder="Your full name" class="w-full px-3 py-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">TIN</label>
+                    <input type="text" id="inv-tin" placeholder="000-000-000" class="w-full px-3 py-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Client Name</label>
+                    <input type="text" id="inv-client" placeholder="Client name" class="w-full px-3 py-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Invoice #</label>
+                    <input type="text" id="inv-num" value="INV-2026-001" class="w-full px-3 py-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Amount (₱)</label>
+                    <input type="number" id="inv-amount" placeholder="0.00" class="w-full px-3 py-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Date</label>
+                    <input type="date" id="inv-date" class="w-full px-3 py-2 border rounded-lg">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Description of Services</label>
+                <textarea id="inv-desc" rows="3" class="w-full px-3 py-2 border rounded-lg" placeholder="e.g. Remote freelance services — October 2026"></textarea>
+            </div>
+            <button id="gen-invoice" class="mt-4 w-full bg-accent hover:bg-amber-600 text-slate-900 py-3 rounded-lg font-semibold">Generate Invoice</button>
+        </div>
+        <div id="invoice-preview" class="hidden border-2 border-slate-200 rounded-xl p-8 bg-white">
+            <div class="border-b pb-4 mb-4">
+                <h3 class="text-2xl font-bold text-slate-800">INVOICE</h3>
+                <p class="text-sm text-slate-500 mt-1" id="preview-sub">—</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
+                <div>
+                    <p class="font-semibold mb-1">From</p>
+                    <p id="preview-from">—</p>
+                    <p class="text-slate-500">TIN: <span id="preview-tin">—</span></p>
+                </div>
+                <div>
+                    <p class="font-semibold mb-1">Bill To</p>
+                    <p id="preview-to">—</p>
+                </div>
+            </div>
+            <div class="mb-6 text-sm">
+                <p class="font-semibold mb-1">Description</p>
+                <p id="preview-desc" class="whitespace-pre-line">—</p>
+            </div>
+            <div class="border-t pt-4 text-right">
+                <p class="text-2xl font-bold text-primary" id="preview-amount">—</p>
+            </div>
+            <p class="mt-6 text-xs text-slate-400 text-center">This does not serve as Official Receipt. Issue BIR-printed OR upon payment.</p>
+            <div class="mt-4 text-center">
+                <button onclick="copyInvoice()" class="text-sm bg-slate-100 px-4 py-2 rounded-lg hover:bg-slate-200"><i class="fa fa-copy"></i> Copy</button>
+                <button onclick="printSection('invoice-preview')" class="text-sm bg-slate-100 px-4 py-2 rounded-lg hover:bg-slate-200 ml-2"><i class="fa fa-print"></i> Save PDF</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============== BIR GUIDE ============== -->
+<section id="bir-guide" class="py-16 bg-slate-50">
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-bold mb-3">BIR Form 1701Q — Step-by-Step Guide</h2>
+            <p class="text-slate-600">Exactly what to write in every line for self-employed / 8% filers</p>
+        </div>
+        <div class="bg-white rounded-2xl p-6 card-shadow">
+            <h3 class="font-bold text-lg mb-4 text-primary">For 8% Flat Tax Filers — Simplified</h3>
+            <div class="space-y-5 text-sm">
+                <div class="border-b pb-4">
+                    <p class="font-semibold text-slate-700 mb-2">Part I — Background Info</p>
+                    <ul class="space-y-1 text-slate-600 pl-4">
+                        <li>• TIN: Your TIN</li>
+                        <li>• Registered Name: Your full name</li>
+                        <li>• Taxpayer Type: <strong>Self-Employed</strong></li>
+                        <li>• Return Type: <strong>Quarterly</strong></li>
+                        <li>• Tax Regime: Check box for <strong>8% Flat Income Tax</strong></li>
+                    </ul>
+                </div>
+                <div class="border-b pb-4">
+                    <p class="font-semibold text-slate-700 mb-2">Part II — Income Computation</p>
+                    <ul class="space-y-1 text-slate-600 pl-4">
+                        <li>• <strong>Line 1</strong> — Gross Sales/Receipts: Total collected this quarter</li>
+                        <li>• <strong>Line 2</strong> — Less: Exempt Amount: ₱250,000 annual pro-rated (Q1: ₱62,500; Q2: ₱125,000; Q3: ₱187,500)</li>
+                        <li>• <strong>Line 3</strong> — Net Taxable Sales: Line 1 minus Line 2 (if negative, put 0)</li>
+                        <li>• <strong>Line 4</strong> — Tax Due: Line 3 × 8%</li>
+                        <li>• <strong>Line 5</strong> — Less: Tax Credits/Payments from previous quarters</li>
+                        <li>• <strong>Line 6</strong> — Tax Payable: Line 4 minus Line 5 → This is what you pay</li>
+                    </ul>
+                </div>
+                <div class="border-b pb-4">
+                    <p class="font-semibold text-slate-700 mb-2">Where to File & Pay</p>
+                    <ul class="space-y-1 text-slate-600 pl-4">
+                        <li>• File at your <strong>RDO (Revenue District Office)</strong> or via eBIRForms</li>
+                        <li>• Pay at authorized bank, Landbank Link.Biz, or GCash</li>
+                        <li>• Bring: Copy of return + payment proof + COR</li>
+                    </ul>
+                </div>
+                <div class="bg-amber-50 p-4 rounded-lg">
+                    <p class="font-semibold text-amber-800 mb-2">💡 Key Reminders</p>
+                    <ul class="text-amber-900 space-y-1 text-sm">
+                        <li>• 8% filers do NOT deduct expenses — the rate already includes standard deduction</li>
+                        <li>• If exceeding ₱3M annual → automatically shift to Graduated tax next quarter</li>
+                        <li>• Keep copies of returns & receipts for at least 3 years</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============== RESOURCES ============== -->
+<section id="resources" class="py-16 bg-white">
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-bold mb-3">Banking, Deadlines & Platforms</h2>
+            <p class="text-slate-600">Everything you need to operate legally & efficiently</p>
+        </div>
+
+        <!-- Banking -->
+        <div class="mb-10">
+            <h3 class="text-xl font-bold mb-4">🏦 Recommended Banks & Payment Channels</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-slate-100">
+                            <th class="p-3 text-left">Service</th>
+                            <th class="p-3 text-left">Type</th>
+                            <th class="p-3 text-left">Fee</th>
+                            <th class="p-3 text-left">Clearance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bank-table">
+                        <!-- Populated automatically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="mb-10">
+            <h3 class="text-xl font-bold mb-4">📅 2026 Filing Calendar</h3>
+            <div class="space-y-4">
+                <div class="bg-slate-50 p-4 rounded-xl border-l-4 border-indigo-500">
+                    <p class="font-semibold">Q1 — Covers Jan 1–Mar 31</p>
+                    <p class="text-sm text-slate-600">Deadline: May 29, 2026</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border-l-4 border-amber-500">
+                    <p class="font-semibold">Q2 — Covers Apr 1–Jun 30</p>
+                    <p class="text-sm text-slate-600">Deadline: Aug 29, 2026</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border-l-4 border-teal-500">
+                    <p class="font-semibold">Q3 — Covers Jul 1–Sep 30</p>
+                    <p class="text-sm text-slate-600">Deadline: Nov 29, 2026</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border-l-4 border-slate-700">
+                    <p class="font-semibold">Annual — Covers Oct 1–Dec 31</p>
+                    <p class="text-sm text-slate-600">Deadline: Apr 15, 2027</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Work Platforms -->
+        <div>
+            <h3 class="text-xl font-bold mb-4">💼 Where to Find Legit Work</h3>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="border p-4 rounded-xl">
+                    <p class="font-semibold mb-2">Upwork</p>
+                    <p class="text-sm text-slate-600 mb-3">Largest global marketplace — escrow-protected payments</p>
+                    <a href="#" id="aff-upwork" class="text-primary text-sm hover:underline">→ Create Profile</a>
+                </div>
+                <div class="border p-4 rounded-xl">
+                    <p class="font-semibold mb-2">OnlineJobs.ph</p>
+                    <p class="text-sm text-slate-600 mb-3">Direct hire — employers specifically seek Filipino workers</p>
+                    <a href="#" id="aff-ojph" class="text-primary text-sm hover:underline">→ Post Resume</a>
+                </div>
+                <div class="border p-4 rounded-xl">
+                    <p class="font-semibold mb-2">Fiverr</p>
+                    <p class="text-sm text-slate-600 mb-3">Service-based — sell packages to global clients</p>
+                    <a href="#" id="aff-fiverr" class="text-primary text-sm hover:underline">→ Start Selling</a>
+                </div>
+                <div class="border p-4 rounded-xl">
+                    <p class="font-semibold mb-2">Raket.ph</p>
+                    <p class="text-sm text-slate-600 mb-3">Local PH platform — work with nearby businesses</p>
+                    <a href="#" class="text-primary text-sm hover:underline">→ Browse Rakets</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============== FAQ ============== -->
+<section id="faq" class="py-16 bg-slate-50">
+    <div class="max-w-3xl mx-auto px-4">
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-bold mb-3">Frequently Asked Questions</h2>
+        </div>
+        <div class="space-y-3">
+            <details class="bg-white p-5 rounded-xl shadow-sm">
+                <summary class="font-semibold cursor-pointer">How do I update rates, links, or deadlines?</summary>
+                <p class="mt-2 text-slate-600">Open your <code class="bg-slate-100 px-1 rounded">index.html</code> → scroll to the CONFIG block at the very top → edit the values → Save → Re-upload. Everything across the site updates automatically.</p>
+            </details>
+            <details class="bg-white p-5 rounded-xl shadow-sm">
+                <summary class="font-semibold cursor-pointer">Can I switch between 8% and Graduated tax?</summary>
+                <p class="mt-2 text-slate-600">Choose once at the start of the calendar year. Once you pick 8%, you stay on it all year — unless your gross income exceeds ₱3M, which automatically shifts you to Graduated starting that quarter.</p>
+            </details>
+            <details class="bg-white p-5 rounded-xl shadow-sm">
+                <summary class="font-semibold cursor-pointer">What counts as a deductible expense?</summary>
+                <p class="mt-2 text-slate-600">Must be directly related to earning income — internet, laptop, phone, software, travel. Keep Official Receipts. Note: 8% filers do NOT itemize — the rate already includes a standard deduction.</p>
+            </details>
+            <details class="bg-white p-5 rounded-xl shadow-sm">
+                <summary class="font-semibold cursor-pointer">How do I earn from this website?</summary>
+                <p class="mt-2 text-slate-600">Paste your affiliate links in the CONFIG block → visitors click → sign up → you earn commission. Later: enable AdSense by pasting your Publisher ID in CONFIG.</p>
+            </details>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-slate-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="grid md:grid-cols-3 gap-8">
+            <div>
+                <h3 class="font-bold text-xl mb-3">PH Freelance Hub</h3>
+                <p class="text-slate-400 text-sm">Complete tools for Filipino freelancers — free, updated, always improving.</p>
+                <p class="text-slate-500 text-xs mt-4">⚠️ Independent educational resource. Not affiliated with BIR, SSS, PhilHealth, or Pag-IBIG. Verify figures with official sources.</p>
+            </div>
+            <div>
+                <h4 class="font-semibold mb-3">Quick Links</h4>
+                <ul class="space-y-2 text-sm text-slate-400">
+                    <li><a href="#calculators" class="hover:text-white">Calculators</a></li>
+                    <li><a href="#tax-advisor" class="hover:text-white">Tax Advisor</a></li>
+                    <li><a href="#invoice" class="hover:text-white">Invoice Generator</a></li>
+                    <li><a href="#bir-guide" class="hover:text-white">BIR Guide</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-semibold mb-3">Control & Update</h4>
+                <p class="text-sm text-slate-400 mb-2">Edit CONFIG block at top to update everything.</p>
+                <p class="text-xs text-slate-500">Version 2.5-FINAL • Ready to grow</p>
+            </div>
+        </div>
+        <p class="border-t border-slate-800 mt-8 pt-6 text-slate-500 text-sm">© 2026 PH Freelance Hub — All rights reserved</p>
+    </div>
+</footer>
+
+<!-- ================================================== -->
+<!-- ALL FUNCTIONS — NOTHING TO EDIT BELOW THIS LINE -->
+<!-- ================================================== -->
+<script>
+const fmt = (n) => '₱' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const usdFmt = (n) => '$' + n.toFixed(2);
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Set meta
+    document.title = CONFIG.meta.title;
+    document.getElementById('hero-date').textContent = CONFIG.meta.lastUpdated;
+    document.getElementById('exch-rate').value = CONFIG.meta.defaultExchangeRate;
+
+    // Set affiliate links from ONE place
+    document.getElementById('wise-signup').href = CONFIG.affiliates.wise || '#';
+    document.getElementById('aff-upwork').href = CONFIG.affiliates.upwork || '#';
+    document.getElementById('aff-fiverr').href = CONFIG.affiliates.fiverr || '#';
+
+    // Populate banks
+    const bankBody = document.getElementById('bank-table');
+    CONFIG.banks.forEach(b => {
+        bankBody.innerHTML += `<tr class="border-t"><td class="p-3">${b.name}${b.recommended ? ' ⭐' : ''}</td><td class="p-3 text-sm
